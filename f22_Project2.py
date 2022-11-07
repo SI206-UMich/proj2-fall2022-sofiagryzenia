@@ -28,18 +28,29 @@ def get_listings_from_search_results(html_file):
     ]
     """
 
-    with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), html_file), 'r') as f:
-    
-        
-        soup = BeautifulSoup(f.content, 'html.parser')
-        listings_list = soup.find_all("div",class_='t1jojoys')
-        print(listings_list)
+    #with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), html_file), 'r') as f: 
+    with open(html_file, "r") as file:
+        soup = BeautifulSoup(file.read(), 'html.parser')
+        listings_list = soup.find_all("div",class_='t1jojoys dir dir-ltr')
+        id_list = []
+        listing_lst = []
         for listing in listings_list:
             info = listing.get('id')
-        print(info)
-                
+            id = info.split("_")[1]
+            id_list.append(id)
+            listing_text = listing.text
+            listing_lst.append(listing_text)
+        cost_list = soup.find_all("span",class_='_tyxjp1')
+        cost_lst = []
+        for cost in cost_list:
+            cost_text = cost.text
+            cost_text = int(cost_text.replace("$",""))
+            cost_lst.append(cost_text)
+        
+        final = zip(listing_lst,cost_lst,id_list)
+      
+        return list(final)
 
-    
 
 
 
@@ -67,7 +78,11 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
+    f = open(f"html_files/listing_{listing_id}.html", "r")
+    soup = BeautifulSoup(f.read(), 'html.parser')
+    policy_nums = soup.find_all("span",class_='ll4r2nl dir dir-ltr')
+    print(policy_nums)
+
 
 
 def get_detailed_listing_database(html_file):
@@ -162,7 +177,7 @@ class TestCases(unittest.TestCase):
         # check that the variable you saved after calling the function is a list
         self.assertEqual(type(listings), list)
         # check that each item in the list is a tuple
-        self.assertEqual(all(type(ele) for ele in listings), tuple)
+        self.assertTrue(all([type(ele) == tuple for ele in listings]))
         # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
         self.assertEqual(listings[0],('Loft in Mission District', 210, '1944564'))
         # check that the last title is correct (open the search results html and find it)
@@ -257,24 +272,16 @@ class TestCases(unittest.TestCase):
         self.assertEqual(invalid_listings[0], '16204265')
         pass
 
-def main():
+
     
-    html = "html_files/mission_district_search_results.html"
-    get_listings_from_search_results(html)
-    html_list = ["1623609",
-                    "1944564",
-                    "1550913",
-                    "4616596",
-                    "6600081"]
-    [get_listing_information(id) for id in html_list]
-    detailed_database = get_detailed_listing_database(html)
-    write_csv(detailed_database, html) #not sure if 2nd parameter is correct
-    check_policy_numbers(detailed_database)
 
 
     
 
 if __name__ == '__main__':
+   
+    html = "html_files/mission_district_search_results.html"
+    get_listings_from_search_results(html)
     database = get_detailed_listing_database("html_files/mission_district_search_results.html")
     write_csv(database, "airbnb_dataset.csv")
     check_policy_numbers(database)
