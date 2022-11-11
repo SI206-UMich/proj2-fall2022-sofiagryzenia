@@ -200,6 +200,7 @@ def check_policy_numbers(data):
     pattern2 = "STR-000\d{4}"
 
     policy_list = []
+    id_list = []
     for tup in data:
         policy_num = tup[3]
         if policy_num != "Pending" and policy_num != "Exempt": 
@@ -207,14 +208,14 @@ def check_policy_numbers(data):
             results2 = re.findall(pattern2,policy_num)
             if policy_num not in results1 and policy_num not in results2:
                 policy_list.append(policy_num)
+            for num in policy_list:
+                if num in tup:
+                    id_list.append(tup[2])    
 
-    return policy_list
+    return id_list
                 
-
                 
         
-
-
 
 def extra_credit(listing_id):
     """
@@ -230,8 +231,23 @@ def extra_credit(listing_id):
     gone over their 90 day limit, else return True, indicating the lister has
     never gone over their limit.
     """
-    pass
-
+    f = open(f"html_files/listing_{listing_id}_reviews.html", "r") 
+    soup = BeautifulSoup(f.read(), 'html.parser')
+    f.close()
+    review_dates = soup.find_all("ol",class_='_7h1p0g')
+    year_list = []
+    year_count_dict = {}
+    for date in review_dates:
+        year_list.append(date.text.split(" ")[1])
+    for year in year_list:
+        year_count_dict[year] = year_count_dict.get(year, 0) + 1
+    print(year_count_dict)
+    if any([num > 90 for num in year_count_dict.values()]):
+        return False
+    else:
+        return True
+        
+    
 
 class TestCases(unittest.TestCase):
 
@@ -336,6 +352,19 @@ class TestCases(unittest.TestCase):
         # check that the first element in the list is '16204265'
         self.assertEqual(invalid_listings[0], '16204265')
 
+    def test_extra_credit(self):
+    
+        html_list2 = ["16204265",
+                        "1944564"]
+        check_months = [extra_credit(id) for id in html_list2]
+        
+        self.assertEqual(len(check_months), 2)
+
+        self.assertEqual(check_months[0], False)
+
+        self.assertEqual(check_months[1], True)
+
+
     
 
 if __name__ == '__main__':
@@ -354,7 +383,7 @@ if __name__ == '__main__':
                      "4616596",
                      "6600081"]
         # call get_listing_information for i in html_list:
-    listing_informations = [get_listing_information(id) for id in html_list]
+    [get_listing_information(id) for id in html_list]
     
     #function 3
     database = get_detailed_listing_database(html)
@@ -364,5 +393,10 @@ if __name__ == '__main__':
 
     #function 5
     check_policy_numbers(database)
+
+    #ec
+    html_list2 = ["16204265",
+                     "1944564"]
+    [extra_credit(id) for id in html_list2]
 
     unittest.main(verbosity=2)
